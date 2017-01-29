@@ -1,8 +1,10 @@
 //return the index of the autonomous indicated by the dial.
 int getAutonSelectorIndex() {
+	int autonPotValue = SensorValue[autonSelectorPot];
 	int index = 0;
 	int autonNamePotRanges[6] = {3500, 2500, 1900, 1000, 300, -300};
-	while(SensorValue[autonSelectorPot] < autonNamePotRanges) {
+	//stop when value not greater than next current.
+	while(autonPotValue < autonNamePotRanges[index] && index < 5) {
 		index++;
 	}
 	return index;
@@ -26,18 +28,24 @@ task LCD()
 	int newAutonSelectorIndex;
 	int oldAutonSelectorIndex = getAutonSelectorIndex();
 
+	//start with the initial auton name displayed
+	clearLCDLine(1);
+	wait10Msec(5);
+	displayLCDString(1, 0, autonNames[getAutonSelectorIndex()]);
+
 	while(true) {
 		//display voltage
 		clearLCDLine(0);
 		batteryString = "";
-		sprintf(batteryString, "MA: %1.2%fV, BK: %1.2%fV", nAvgBatteryLevel/1000.0, BackupBatteryLevel/1000.0);
+		sprintf(batteryString, "MA-%.1fV, BK-%.21fV", nImmediateBatteryLevel/1000.0, BackupBatteryLevel/1000.0);
 		displayLCDString(0, 0, batteryString);
 
 		// display auton name.
 		newAutonSelectorIndex = getAutonSelectorIndex();
 		if(oldAutonSelectorIndex != newAutonSelectorIndex) {
 			clearLCDLine(1);
-			displayLCDCenteredString(1, autonNames[newAutonSelectorIndex]);
+			displayLCDString(1, 0, autonNames[newAutonSelectorIndex]);
+			oldAutonSelectorIndex = newAutonSelectorIndex;
 		}
 
 		// flip orientation if button pressed. Pauses task execution briefly during button press.
@@ -48,9 +56,9 @@ task LCD()
 
 		//display orientation
 		autonOrientationChar = (autonOrientation == RIGHT_ORIENTATION) ? 'R' : 'L';
-		displayLCDChar(0, 13, '<');
-		displayLCDChar(0, 14, autonOrientationChar);
-		displayLCDChar(0, 15, '>');
+		displayLCDChar(1, 13, '<');
+		displayLCDChar(1, 14, autonOrientationChar);
+		displayLCDChar(1, 15, '>');
 
 		wait1Msec(25);
 	}
