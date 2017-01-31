@@ -1,4 +1,5 @@
 #pragma config(Sensor, in1,    autonSelectorPot, sensorPotentiometer)
+#pragma config(Sensor, in3,    gyro,           sensorGyro)
 #pragma config(Sensor, dgtl1,  LeftEncoder,    sensorQuadEncoder)
 #pragma config(Sensor, dgtl3,  RightEncoder,   sensorQuadEncoder)
 #pragma config(Sensor, dgtl5,  LiftEncoder,    sensorQuadEncoder)
@@ -22,6 +23,8 @@
 // ======== GLOBAL DEFINITIONS AND PREPROCESSOR DIRECTIVES ==========
 #define LEFT_ORIENTATION -1
 #define RIGHT_ORIENTATION 1
+#define CLOCKWISE 1
+#define COUNTERCLOCKWISE -1
 
 #define CUBE_MIDFIELD_AUTON 0
 #define CUBE_SHORT_AUTON 1
@@ -49,6 +52,9 @@ void pre_auton()
 	SensorValue[LeftEncoder] = 0;
 	SensorValue[RightEncoder] = 0;
 
+	//init gyro
+	SensorValue[gyro] = 0;
+
 	//start LCD.
 	startTask(LCD);
 	//while (true) { wait1Msec(25); }
@@ -61,9 +67,23 @@ task autonomous()
 	while (true) { wait1Msec(25); }
 }
 
+task debugStuff() {
+	clearDebugStream();
+	while(true) {
+		writeDebugStreamLine("%d", SensorValue[gyro]);
+		wait10Msec(2);
+
+		// testing turn function... disable userDrive powering drive to test.
+		if(vexRT(Btn8R)){
+			turnByGyro(120, 900, CLOCKWISE);
+		}
+	}
+}
+
 task usercontrol()
 {
 	// driving controls.
+	startTask(debugStuff);
 	runUserControl();
-	while (true) { wait1Msec(25); }
+	while (true) { wait1Msec(250); }
 }

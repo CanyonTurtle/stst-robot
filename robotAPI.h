@@ -51,8 +51,8 @@ void holdLiftAtEncoderTarget(int encoderTarget) {
 }
 
 // move drivebase forward until encoder delta is reached.
-void moveDriveByEncoderChange(int encoderChange) {
-	int drivePower = (encoderChange > 0) ? 127 : -127;
+void moveDriveByEncoderChange(int power, int encoderChange) {
+	int drivePower = (encoderChange > 0) ? power : -1 * power;
 	int initialEncoderValue = SensorValue[RightEncoder];
 	int targetEncoderValue = initialEncoderValue + encoderChange;
 
@@ -75,4 +75,30 @@ void turnDriveByTime(int power, int timeInMsec) {
 	}
 	setDrivePower(power, -1 * power);
 	wait1Msec(timeInMsec);
+	setDrivePower(0,0);
+}
+
+// turn, input angle in tenths of a degree, angle is always positive, dir either CLOCKWISE or COUTNERCLOCKWISE
+void turnByGyro(int power, unsigned int angleChange, int dir) {
+	bool flippedAngle = (dir == CLOCKWISE && autonOrientation == RIGHT_ORIENTATION) ? true : false;
+	int initialAngle = SensorValue[gyro];
+	angleChange = (flippedAngle) ? -1 * angleChange : angleChange;
+	int targetAngle = initialAngle + angleChange;
+
+	int drivePower = (autonOrientation == LEFT_ORIENTATION) ? -1 * power : power;
+
+	//ramp up drive speed to reduce gyro drift
+	setDrivePower(0.5 * drivePower, -0.5 * drivePower);
+	wait10Msec(30);
+	setDrivePower(drivePower, -1 * drivePower);
+
+	if(flippedAngle) {
+		waitUntil(targetAngle - SensorValue(gyro) > 0);
+	}
+	else {
+		waitUntil(targetAngle - SensorValue(gyro) < 0);
+	}
+	setDrivePower(-0.5 * drivePower, 0.5 * drivePower);
+	wait10Msec(10);
+	setDrivePower(0,0);
 }
